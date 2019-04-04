@@ -22,7 +22,7 @@ function varargout = videoRecording(varargin)
 
 % Edit the above text to modify the response to help videoRecording
 
-% Last Modified by GUIDE v2.5 21-Mar-2019 23:06:21
+% Last Modified by GUIDE v2.5 30-Mar-2019 21:27:46
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -87,11 +87,23 @@ vidRes = vid.VideoResolution;
 nBands = vid.NumberOfBands;
 hObject = image( zeros(vidRes(2), vidRes(1), nBands) );
 preview(vid,hObject);
+srcinfo = propinfo(src);
+set(handles.brgslider,'min',srcinfo.Brightness.ConstraintValue(1))
+set(handles.brgslider,'max',srcinfo.Brightness.ConstraintValue(2))
 set(handles.brgslider, 'Value',src.Brightness)
+set(handles.contslider,'min',srcinfo.Contrast.ConstraintValue(1))
+set(handles.contslider,'max',srcinfo.Contrast.ConstraintValue(2))
 set(handles.contslider, 'Value',src.Contrast)
-set(handles.gamslider, 'Value',src.Gamma)
+set(handles.satuslider,'min',srcinfo.Saturation.ConstraintValue(1))
+set(handles.satuslider,'max',srcinfo.Saturation.ConstraintValue(2))
 set(handles.satuslider, 'Value',src.Saturation)
+set(handles.shapslider,'min',srcinfo.Sharpness.ConstraintValue(1))
+set(handles.shapslider,'max',srcinfo.Sharpness.ConstraintValue(2))
 set(handles.shapslider, 'Value',src.Sharpness)
+% set(handles.gamslider,'min',srcinfo.Gamma.ConstraintValue(1))
+% set(handles.gamslider,'max',srcinfo.Gamma.ConstraintValue(2))
+% set(handles.gamslider, 'Value',src.Gamma)
+
 
 % --------------------------------------------------------------------
 function FileMenu_Callback(hObject, eventdata, handles)
@@ -154,8 +166,9 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
      set(hObject,'BackgroundColor','white');
 end
 imaqreset
-camera = imaqfind;
-cameraList = camera.Name;
+camerainfo = imaqhwinfo('winvideo');
+camera = camerainfo.DeviceInfo;
+cameraList = {camera(:).DeviceName};
 set(hObject, 'String', cameraList);
 
 
@@ -179,16 +192,16 @@ global vid
 vid.FramesPerTrigger = 30;
 vid.LoggingMode = 'disk';
 vid.TriggerRepeat = Inf;
-fileDir = 'D:\Data\';
+fileDir = 'D:\Data\Classical_conditioning\eye\';
 realTime = clock;
 handles.fileName = [fileDir get(handles.mouseName,'String'), '_', num2str(realTime, '%4d%02d%02d_%02d%02d%02.0f')];
-diskLogger = VideoWriter(handles.fileName, 'Motion JPEG AVI');
+diskLogger = VideoWriter(handles.fileName, 'MPEG-4');
 vid.Tag = handles.fileName;
 vid.DiskLogger = diskLogger;
 vid.FramesAcquiredFcnCount = 10;
 vid.FramesAcquiredFcn = {'timerecord'};
 vid.StopFcn = {'timerecord'};
-fileDir = 'D:\Data\';
+fileDir = 'D:\Data\Classical_conditioning\eye';
 realTime = clock;
 handles.fileName = [fileDir get(handles.mouseName,'String'), '_', num2str(realTime, '%4d%02d%02d_%02d%02d%02.0f')];
 set(handles.starttime,'String', num2str(num2str(realTime, '%4d%02d%02d_%02d%02d%02.0f')))
@@ -204,13 +217,15 @@ function stopbutton_Callback(hObject, eventdata, handles)
 global vid
 stop(vid);
 set(handles.endtime,'String', num2str(num2str(clock, '%4d%02d%02d_%02d%02d%02.0f')))
-fileDir = 'D:\Data\';
+fileDir = 'D:\Data\Classical_conditioning\eye\';
 handles.filename = [fileDir, get(handles.mouseName,'String'), '_', get(handles.starttime,'String'), '_eventlog.mat'];
 eventlog = vid.EventLog;
 save(handles.filename, 'eventlog')
 set(handles.recordbutton, 'Enable', 'on');
 set(handles.previewbutton, 'Enable', 'on');
 set(handles.stopbutton, 'Enable', 'off');
+stoppreview(vid)
+delete(vid)
 
 
 % --- Executes during object creation, after setting all properties.
@@ -378,3 +393,18 @@ function recordstart_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to recordstart (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes on button press in graycheck.
+function graycheck_Callback(hObject, eventdata, handles)
+% hObject    handle to graycheck (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global vid
+if (get(handles.graycheck,'Value'))
+    vid.ReturnedColorSpace = 'grayscale';
+else
+    vid.ReturnedColorSpace = 'rgb';
+end
+
+% Hint: get(hObject,'Value') returns toggle state of graycheck

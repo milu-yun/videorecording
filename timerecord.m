@@ -1,14 +1,15 @@
 function timerecord(obj,event)
-persistent timelist
+%persistent timelist
 %pTime = clock;
 EventData = event.Data;
 pTime = EventData.AbsTime;
 pFrame = obj.FramesAcquired;
-
-timelist = [timelist;  pFrame, pTime];
+obj.Userdata = [obj.Userdata; pFrame, pTime];
+%timelist = [timelist;  pFrame, pTime];
 if ~isrunning(obj)
     handles.fileName = [obj.Tag, '_frametime.mat'];
+    timelist = obj.Userdata;
     save(handles.fileName, 'timelist')
-    timelist = [];
+    %timelist = [];
 end
 end
